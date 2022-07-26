@@ -1,0 +1,728 @@
+from time import sleep # We'll want a few breaks throughout the game so that players don't feel this is going too fast
+from random import randint # For the computer player
+from time import time # To time each round
+
+print("Welcome to Connect 4!\n")
+
+# Create a function that prints each row and column of the board
+def print_board(board):
+    '''print_board(board) -> None
+    Prints the current Connect 4 board
+    board: list'''
+    # Go through each row and column and print the element in the index, with a newline at the end of each row
+    for row in board:
+        for column in row:
+            print(str(column) + ' ', end = '')
+        print('\n')
+
+# Create a function that simulates Player X's turn
+def player_x_turn(board,x):
+    '''player_x_turn(board,x) -> bool
+    Simulates Player X's turn
+    board: list'''
+
+    x = x%7
+    
+    # Systematically check if each row in the column is full
+    if board[6][x] in "XO":
+        if board[5][x] in "XO":
+            if board[4][x] in "XO":
+                if board[3][x] in "XO":
+                    if board[2][x] in "XO":
+                        if board[1][x] in "XO":
+                            print("Sorry, that column is full. Please choose another column.")
+                            print_board(board)
+                            return False # Player X has not finished their turn
+                        else:
+                            board[1][x] = "X"
+                    else:
+                        board[2][x] = "X"
+                else:
+                    board[3][x] = "X"
+            else:
+                board[4][x] = "X"
+        else:
+            board[5][x] = "X"
+    else:
+        board[6][x] = "X"
+    print_board(board)
+    return True # Player X has finished their turn
+
+
+# Create a function that simulates Player O's turn
+def player_o_turn(board,o):
+    '''player_o_turn(board,o) -> bool
+    Simulates Player O's turn
+    board: list'''
+
+    o=o%7
+    
+    # Systematically check if each row in the column is full
+    if board[6][o] in "XO":
+        if board[5][o] in "XO":
+            if board[4][o] in "XO":
+                if board[3][o] in "XO":
+                    if board[2][o] in "XO":
+                        if board[1][o] in "XO":
+                            print("Sorry, that column is full. Please choose another column.")
+                            print_board(board)
+                            return False # Player O has not finished their turn
+                        else:
+                            board[1][o] = "O"
+                    else:
+                        board[2][o] = "O"
+                else:
+                    board[3][o] = "O"
+            else:
+                board[4][o] = "O"
+        else:
+            board[5][o] = "O"
+    else:
+        board[6][o] = "O"
+    print_board(board)
+    return True # Player O has finished their turn
+    
+# Create a function to determine whether Player X has won
+def is_x_winner(board):
+    for row in range(1,7):
+        for column in range(7):
+            if column + 3 <= 6:
+                if board[row][column] == board[row][column+1] == board[row][column+2] == board[row][column+3] == "X":
+                    return True # X has won
+                if row - 3 >= 0:
+                    if board[row][column] == board[row-1][column+1] == board[row-2][column+2] == board[row-3][column+3] == "X":
+                        return True # X has won
+            if row + 3 <= 6:
+                if board[row][column] == board[row+1][column] == board[row+2][column] == board[row+3][column] == "X":
+                    return True # X has won
+                if column + 3 <= 6:
+                    if board[row][column] == board[row+1][column+1] == board[row+2][column+2] == board[row+3][column+3] == "X":
+                        return True # X has won
+    return False # X has not won
+
+# Create a function to determine whether Player O has won
+def is_o_winner(board):
+    for row in range(1,7):
+        for column in range(7):
+            if column + 3 <= 6:
+                if board[row][column] == board[row][column+1] == board[row][column+2] == board[row][column+3] == "O":
+                    return True # O has won
+                if row - 3 >= 1:
+                    if board[row][column] == board[row-1][column+1] == board[row-2][column+2] == board[row-3][column+3] == "O":
+                        return True # O has won
+            if row + 3 <= 6:
+                if board[row][column] == board[row+1][column] == board[row+2][column] == board[row+3][column] == "O":
+                    return True # O has won
+                if column + 3 <= 6:
+                    if board[row][column] == board[row+1][column+1] == board[row+2][column+2] == board[row+3][column+3] == "O":
+                        return True # O has won
+    return False # O has not won
+# Create a function to determine whether Player X has almost won (For the use of the Computer)
+def is_x_almost_winner(board):
+    listOfPossibles = []
+    for row in range(1,7):
+        for column in range(7):
+            # Horizontal almost-wins
+            if row + 1 <= 6 and column - 1 >= 0 and column + 2 <= 6:
+                if board[row][column] == board[row][column+1] == board[row][column+2] == "X" and board[row][column-1] == "." and board[row+1][column-1] in "XO":
+                    listOfPossibles.append(column-1)
+            if row + 1 <= 6 and column + 3 <= 6:
+                if board[row][column] == board[row][column+1] == board[row][column+2] == "X" and board[row][column+3] == "." and board[row+1][column+3] in "XO":
+                    listOfPossibles.append(column+3)
+            if row == 6 and column - 1 >= 0 and column + 2 <= 6:
+                if board[row][column] == board[row][column+1] == board[row][column+2] == "X" and board[row][column-1] == ".":
+                    listOfPossibles.append(column-1)
+            if row == 6 and column + 3 <= 6:
+                if board[row][column] == board[row][column+1] == board[row][column+2] == "X" and board[row][column+3] == ".":
+                    listOfPossibles.append(column+3)
+            # Vertical almost-wins
+            if row - 1 >= 1 and row + 2 <= 6:
+                if board[row][column] == board[row+1][column] == board[row+2][column] == "X" and board[row-1][column] == ".":
+                    listOfPossibles.append(column)
+            # Lower-right diagonal almost-wins
+            if row + 3 < 6 and column + 3 <= 6:
+                if board[row][column] == board[row+1][column+1] == board[row+2][column+2] == "X" and board[row+3][column+3] == "." and board[row+2][column+3] in "XO":
+                    listOfPossibles.append(column+1)
+            if row + 3 < 6 and column + 3 <= 6:
+                if board[row][column] == board[row+1][column+1] == board[row+3][column+3] == "X" and board[row+2][column+2] == "." and board[row+1][column+2] in "XO":
+                    listOfPossibles.append(column+2)
+            if row + 3 < 6 and column + 3 <= 6:
+                if board[row][column] == board[row+2][column+2] == board[row+3][column+3] == "X" and board[row+1][column+1] == "." and board[row][column+1] in "XO":
+                    listOfPossibles.append(column+1)
+            if row + 3 < 6 and row - 1 >= 1 and column + 3 <= 6:
+                if board[row+1][column+1] == board[row+2][column+2] == board[row+3][column+3] == "X" and board[row][column] == "." and board[row-1][column] in "XO":
+                    listOfPossibles.append(column)
+            if row + 3 == 6 and column + 3 <= 6:
+                if board[row][column] == board[row+1][column+1] == board[row+2][column+2] == "X" and board[row+3][column+3] == ".":
+                    listOfPossibles.append(column+3)
+            if row + 3 == 6 and column + 3 <= 6:
+                if board[row][column] == board[row+1][column+1] == board[row+3][column+3] == "X" and board[row+2][column+2] == ".":
+                    listOfPossibles.append(column+2)
+            if row + 3 == 6 and column + 3 <= 6:
+                if board[row][column] == board[row+2][column+2] == board[row+3][column+3] == "X" and board[row+1][column+1] == ".":
+                    listOfPossibles.append(column+1)
+            if row + 3 == 6 and row - 1 >= 1 and column + 3 <= 6:
+                if board[row+1][column+1] == board[row+2][column+2] == board[row+3][column+3] == "X" and board[row][column] == ".":
+                    listOfPossibles.append(column)
+            # Upper-right diagonal almost-wins
+            if row - 2 >= 1 and column + 3 <= 6:
+                if board[row][column] == board[row-1][column+1] == board[row-2][column+2] == "X" and board[row-3][column+3] == "." and board[row-2][column+3] in "XO":
+                    listOfPossibles.append(column+3)
+            if row - 3 >= 1 and column + 3 <= 6:
+                if board[row][column] == board[row-1][column+1] == board[row-3][column+3] == "X" and board[row-2][column+2] == "." and board[row-1][column+2] in "XO":
+                    listOfPossibles.append(column+2)
+            if row + 2 <= 6 and column + 3 <= 6:
+                if board[row][column] == board[row-2][column+2] == board[row-3][column+3] == "X" and board[row-1][column+1] == "." and board[row][column+1] in "XO":
+                    listOfPossibles.append(column+1)
+            if row - 3 >= 1 and row + 1 <= 6 and column + 3 <= 6:
+                if board[row-1][column+1] == board[row-2][column+2] == board[row-3][column+3] == "X" and board[row][column] == "." and board[row+1][column] in "XO":
+                    listOfPossibles.append(column)
+            if row + 2 == 6 and column + 3 <= 6:
+                if board[row][column] == board[row-2][column+2] == board[row-3][column+3] == "X" and board[row-1][column+1] == ".":
+                    listOfPossibles.append(column+1)
+            if row + 3 == 6 and column + 3 <= 6:
+                if board[row-1][column+1] == board[row-2][column+2] == board[row-3][column+3] == "X" and board[row][column] == ".":
+                    listOfPossibles.append(column)
+    return listOfPossibles
+
+# Create a function to determine whether Player O has almost won (For the use of the Computer)
+def is_o_almost_winner(board):
+    listOfPossibles = []
+    for row in range(1,7):
+        for column in range(7):
+            # Horizontal almost-wins
+            if row + 1 <= 6 and column - 1 >= 0 and column + 2 <= 6:
+                if board[row][column] == board[row][column+1] == board[row][column+2] == "O" and board[row][column-1] == "." and board[row+1][column-1] in "XO":
+                    listOfPossibles.append(column-1)
+            if row + 1 <= 6 and column + 3 <= 6:
+                if board[row][column] == board[row][column+1] == board[row][column+2] == "O" and board[row][column+3] == "." and board[row+1][column+3] in "XO":
+                    listOfPossibles.append(column+3)
+            if row == 6 and column - 1 >= 0 and column + 2 <= 6:
+                if board[row][column] == board[row][column+1] == board[row][column+2] == "O" and board[row][column-1] == ".":
+                    listOfPossibles.append(column-1)
+            if row == 6 and column + 3 <= 6:
+                if board[row][column] == board[row][column+1] == board[row][column+2] == "O" and board[row][column+3] == ".":
+                    listOfPossibles.append(column+3)
+            # Vertical almost-wins
+            if row - 1 >= 1 and row + 2 <= 6:
+                if board[row][column] == board[row+1][column] == board[row+2][column] == "O" and board[row-1][column] == ".":
+                    listOfPossibles.append(column)
+            # Lower-right diagonal almost-wins
+            if row + 3 < 6 and column + 3 <= 6:
+                if board[row][column] == board[row+1][column+1] == board[row+2][column+2] == "O" and board[row+3][column+3] == "." and board[row+2][column+3] in "XO":
+                    listOfPossibles.append(column+3)
+            if row + 3 < 6 and column + 3 <= 6:
+                if board[row][column] == board[row+1][column+1] == board[row+3][column+3] == "O" and board[row+2][column+2] == "." and board[row+1][column+2] in "XO":
+                    listOfPossibles.append(column+2)
+            if row + 3 < 6 and column + 3 <= 6:
+                if board[row][column] == board[row+2][column+2] == board[row+3][column+3] == "O" and board[row+1][column+1] == "." and board[row][column+1] in "XO":
+                    listOfPossibles.append(column+1)
+            if row + 3 < 6 and row - 1 >= 1 and column + 3 <= 6:
+                if board[row+1][column+1] == board[row+2][column+2] == board[row+3][column+3] == "O" and board[row][column] == "." and board[row-1][column] in "XO":
+                    listOfPossibles.append(column)
+            if row + 3 <= 6 and column + 3 <= 6:
+                if board[row][column] == board[row+1][column+1] == board[row+2][column+2] == "O" and board[row+3][column+3] == ".":
+                    listOfPossibles.append(column+3)
+            if row + 3 <= 6 and column + 3 <= 6:
+                if board[row][column] == board[row+1][column+1] == board[row+3][column+3] == "O" and board[row+2][column+2] == ".":
+                    listOfPossibles.append(column+2)
+            if row + 3 <= 6 and column + 3 <= 6:
+                if board[row][column] == board[row+2][column+2] == board[row+3][column+3] == "O" and board[row+1][column+1] == ".":
+                    listOfPossibles.append(column+1)
+            if row + 3 == 6 and row - 1 >= 1 and column + 3 <= 6:
+                if board[row+1][column+1] == board[row+2][column+2] == board[row+3][column+3] == "O" and board[row][column] == ".":
+                    listOfPossibles.append(column)
+            # Upper-right diagonal almost-wins
+            if row - 2 >= 1 and column + 3 <= 6:
+                if board[row][column] == board[row-1][column+1] == board[row-2][column+2] == "O" and board[row-3][column+3] == "." and board[row-2][column+3] in "XO":
+                    listOfPossibles.append(column+3)
+            if row - 3 >= 1 and column + 3 <= 6:
+                if board[row][column] == board[row-1][column+1] == board[row-3][column+3] == "O" and board[row-2][column+2] == "." and board[row-1][column+2] in "XO":
+                    listOfPossibles.append(column+2)
+            if row + 2 <= 6 and column + 3 <= 6:
+                if board[row][column] == board[row-2][column+2] == board[row-3][column+3] == "O" and board[row-1][column+1] == "." and board[row][column+1] in "XO":
+                    listOfPossibles.append(column+1)
+            if row + 3 <= 6 and column + 3 <= 6:
+                if board[row-1][column+1] == board[row-2][column+2] == board[row-3][column+3] == "O" and board[row][column] == "." and board[row+1][column] in "XO":
+                    listOfPossibles.append(column)
+            if row + 2 == 6 and column + 3 <= 6:
+                if board[row][column] == board[row-2][column+2] == board[row-3][column+3] == "O" and board[row-1][column+1] == ".":
+                    listOfPossibles.append(column+1)
+            if row + 3 == 6 and column + 3 <= 6:
+                if board[row-1][column+1] == board[row-2][column+2] == board[row-3][column+3] == "O" and board[row][column] == ".":
+                    listOfPossibles.append(column)
+    return listOfPossibles
+
+# Create a function to determine which column Computer X will play in
+def column_to_play_in_X(board, difficultyLevel, xCheckers):
+    '''column_to_play_in_x(board, difficultyLevel, xCheckers) -> int
+    Finds a column for Computer X to play in
+    board: list
+    difficultyLevel: int'''
+
+    if xCheckers == 0:
+        return 3
+
+    for row in range(1,7):
+        if row < 6:
+            for column in range(6):
+                if column+3 <= 6:
+                    for i in [2,3]:
+                        if board[row][column] == board[row][column+i] == "O" and board[row+1][column+i] != ".":
+                            return column
+
+    k = randint(1, 4)
+
+    if difficultyLevel == 1:
+        return randint(0,6)
+    if k >= difficultyLevel:
+        listOfPossibles = is_x_almost_winner(board)
+        if len(listOfPossibles) == 0:
+            listOfPossibles = is_o_almost_winner(board)
+            if len(listOfPossibles) >= 2:
+                n = randint(0,len(listOfPossibles)-1)
+                x = listOfPossibles[n]
+            elif len(listOfPossibles) == 2:
+                x = listOfPossibles[1]
+            else:
+                x = randint(0,6)
+        elif len(listOfPossibles) == 1:
+            x = listOfPossibles[1]
+        elif len(listOfPossibles) >= 2:
+            n = randint(0,len(listOfPossibles)-1)
+            x = listOfPossibles[n]
+        return x
+    else:
+        return randint(0,6)
+
+# Create a function to determine which column Computer O will play in
+def column_to_play_in_O(board, difficultyLevel):
+    '''column_to_play_in_O(board, difficultyLevel) -> int
+    Finds a column for Computer O to play in
+    board: list
+    difficultyLevel: int'''
+ 
+    for row in range(1,7):
+        if row < 6:
+            for column in range(6):
+                if column+3 <= 6:
+                    for i in [2,3]:
+                        if board[row][column] == board[row][column+i] == "O" and board[row+1][column+i] != ".":
+                            return column
+
+    n = randint(1, 100)
+
+    if difficultyLevel == 1:
+        return randint(0,6)
+    elif difficultyLevel == 2:
+        if n <= 20:
+            listOfPossibles = is_o_almost_winner(board)
+            if len(listOfPossibles) == 0:
+                listOfPossibles = is_x_almost_winner(board)
+                if len(listOfPossibles) >= 2:
+                    n = randint(0,len(listOfPossibles)-1)
+                    o = listOfPossibles[n]
+                elif len(listOfPossibles) == 1:
+                        o = listOfPossibles[0]
+                else:
+                    o = randint(0,6)
+            elif len(listOfPossibles) == 1:
+                o = listOfPossibles[0]
+            elif len(listOfPossibles) >= 2:
+                n = randint(0,len(listOfPossibles)-1)
+                o = listOfPossibles[n]
+            return o
+        else:
+            return randint(0,6)
+    elif difficultyLevel == 3:
+        if n <= 40:
+            listOfPossibles = is_o_almost_winner(board)
+            if len(listOfPossibles) == 0:
+                listOfPossibles = is_x_almost_winner(board)
+                if len(listOfPossibles) >= 2:
+                    n = randint(0,len(listOfPossibles)-1)
+                    o = listOfPossibles[n]
+                elif len(listOfPossibles) == 1:
+                    o = listOfPossibles[0]
+                else:
+                    o = randint(0,6)
+            elif len(listOfPossibles) == 1:
+                o = listOfPossibles[0]
+            elif len(listOfPossibles) >= 2:
+                n = randint(0,len(listOfPossibles)-1)
+                o = listOfPossibles[n]
+            return o
+        else:
+            return randint(0,6)
+    elif difficultyLevel == 4:
+        if n <= 60:
+            listOfPossibles = is_o_almost_winner(board)
+            if len(listOfPossibles) == 0:
+                listOfPossibles = is_x_almost_winner(board)
+                if len(listOfPossibles) >= 2:
+                    n = randint(0,len(listOfPossibles)-1)
+                    o = listOfPossibles[n]
+                elif len(listOfPossibles) == 1:
+                    o = listOfPossibles[0]
+                else:
+                    o = randint(0,6)
+            elif len(listOfPossibles) == 1:
+                o = listOfPossibles[0]
+            elif len(listOfPossibles) >= 2:
+                n = randint(0,len(listOfPossibles)-1)
+                o = listOfPossibles[n]
+            return o
+        else:
+            return randint(0,6)
+    elif difficultyLevel == 5:
+        listOfPossibles = is_o_almost_winner(board)
+        if len(listOfPossibles) == 0:
+            listOfPossibles = is_x_almost_winner(board)
+            if len(listOfPossibles) >= 2:
+                n = randint(0,len(listOfPossibles)-1)
+                o = listOfPossibles[n]
+            elif len(listOfPossibles) == 2:
+                o = listOfPossibles[1]
+            else:
+                o = randint(0,6)
+        elif len(listOfPossibles) == 1:
+            o = listOfPossibles[0]
+        elif len(listOfPossibles) >= 2:
+            n = randint(0,len(listOfPossibles)-1)
+            o = listOfPossibles[n]
+        return o
+
+# Create a function to ask the user whether they want to play again
+def Repeat(repeat):
+    '''Repeat(repeat) -> bool
+    Asks the player(s) if they want to play again
+    repeat: str'''
+    if repeat.lower().strip() not in "yesno": # If the user(s) enter something other than yes or no, run the function again
+        print("\nSorry, I did not get that.\n")
+        repeat = str(input('Would you like to play again? Please type "yes" or "no": '))
+        Repeat(repeat)
+
+    elif repeat.lower().strip() == "yes": # If they want to play again, recreate a board and run the game function
+        board = [['0', '1', '2', '3', '4', '5', '6'],
+                 ['.', '.', '.', '.', '.', '.', '.'],
+                 ['.', '.', '.', '.', '.', '.', '.'],
+                 ['.', '.', '.', '.', '.', '.', '.'],
+                 ['.', '.', '.', '.', '.', '.', '.'],
+                 ['.', '.', '.', '.', '.', '.', '.'],
+                 ['.', '.', '.', '.', '.', '.', '.']]
+        play_connect_4_game(board)
+    elif repeat.lower().strip() == "no": # If they say no, return False
+        return False
+
+# Create a function to do the tutorial
+def Tutorial(tutorial):
+    ''''Repeat(repeat) -> None
+    Asks the player(s) if they want to go through the tutorial
+    tutorial: str'''
+    if tutorial.lower() != "yes" and tutorial.lower() != "no": # If the user(s) enter something other than yes or no, run the function again
+        print("\nSorry, I did not get that.\n")
+        tutorial = str(input('Skip tutorial? Please type "yes" or "no": '))
+        Tutorial(tutorial)
+
+    elif tutorial.lower() == "no": # If they do not want to skip tutorial, go through the tutorial
+        print("\n\t\t\t\t\t\t\t\tTutorial\n\t\t\t\t\t\t\t\t--------\n") # Center the tutorial title and underline it
+        print('\nConnect Four is a tic-tac-toe-based game for 2 players. In the commercial version of the game, players take turns\
+ dropping colored\ncheckers (one player is red, the other is black) into one of 7 columns of the game device. In this\
+ virtual version, red checkers will\nbe represented by "X", and black checkers will be represented by "O". The checkers\
+ will fall to the bottom of the column. Each column\ncan hold up to 6 checkers. The first player to get 4 checkers of his\
+ or her color in a row (in any direction, including diagonally) is\nthe winner. If both players play all 21 of their\
+ checkers with neither player getting 4-in-a-row, the game is a draw.\n\nA note: If a player enters an integer that is\
+ greater than 6 or less than 0, the program will take the remainder when that number is\ndivided by 7 and use that for the\
+ column. So the column numbers somewhat "wrap around."')
+        sleep(5)
+    else: # Otherwise, print "OK!" and go ahead with getting the inputs
+        print("\nOK!")
+        sleep(1)
+
+
+# Create a function to simulate the game
+def play_connect_4_game(board):
+    '''play_connect_4_game(board) -> bool
+    Simulates a Connect 4 game, then if they want to repeat, replays it, otherwise, ends the game.
+    board: list'''
+    
+    tutorial = str(input('Skip tutorial? Type "yes" or "no": ')) # Ask user(s) if they want to go through the tutorial or not
+
+    Tutorial(tutorial)
+
+    computerPlayers = ''
+    while computerPlayers != "yes" and computerPlayers != "no":
+        computerPlayers = str(input('\nDo you want to play against the computer? Please type "yes" or "no": ')).lower()
+
+    if computerPlayers == "yes":
+        isComputer = True
+    else:
+        isComputer = False
+
+    
+    if isComputer: # If any player is a computer
+        xOrO = ''
+        while xOrO.lower() != "x" and xOrO.lower() != "o":
+            xOrO = str(input('Do you want to be Player X or Player O? Please type "X" or "O": '))
+        difficultyLevel = '6'
+        while int(difficultyLevel) != 1 and int(difficultyLevel) != 2 and int(difficultyLevel) != 3 and int(difficultyLevel) != 4 and int(difficultyLevel) != 5:
+            difficultyLevel = input("Choose a difficulty level (1, 2, 3, 4, 5): ")
+            while difficultyLevel.isdigit() == False:
+                difficultyLevel = input("Choose a difficulty level (1, 2, 3, 4, 5): ")
+        difficultyLevel = int(difficultyLevel)
+        if xOrO.lower() == "x":
+            print("The Computer will be Player O.")
+            X = str(input("Player X, what is your name? "))
+            xCheckers = 0
+            oCheckers = 0
+            startTime = time()
+            
+            while xCheckers < 21 and oCheckers < 21: # While the players have not finished using all their checkers
+                x = input(str(X) + ", you're X. Which column do you want to play in? ")
+                while x.isdigit() == False:
+                    x = input(str((X) + ", you're X. Which column do you want to play in? "))
+                x = int(x)
+                xTurnDone = player_x_turn(board,x)
+            
+                while xTurnDone == False: # While Player X has not finished their turn
+                    x = int(input(str(X) + ", you're X. Which column do you want to play in? "))
+                    xTurnDone = player_x_turn(board,x)
+                xCheckers += 1
+                if is_x_winner(board) == True: # If Player X has won, end the game and print the result, then ask if they want to repeat
+                    print("Congrats, " + str(X) + ", you've won!")
+                    print("This round took " + str(time()-startTime) + " seconds.")
+                    repeat = str(input('Would you like to play again? Please type "yes" or "no": '))
+                    isRepeat = Repeat(repeat)
+                    if isRepeat == False: # If the user(s) don't want to repeat, return False (This will tell us later to quit the game)
+                        return False
+                    else: # If they do want to play again, reset the board and call the game function (Which we are in)
+                        board = [['0', '1', '2', '3', '4', '5', '6'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.']]
+                        play_connect_4_game(board)
+                
+                sleep(1) # Give a little break between the Players' turns
+                    
+                o = column_to_play_in_O(board, difficultyLevel)
+                print("The Computer plays in column " + str(o) + ".")
+                oTurnDone = player_o_turn(board,o)
+        
+                while oTurnDone == False: # While Player O has not finished their turn
+                    o = randint(0,6)
+                    print("The Computer plays in column " + str(o) + ".")
+                    oTurnDone = player_o_turn(board,o)
+                oCheckers += 1
+                if is_o_winner(board) == True: # If Player O has won, end the game and print the result, then ask if they want to repeat
+                    print("The Computer wins the game!")
+                    print("This round took " + str(time()-startTime) + " seconds.")
+                    repeat = str(input('Would you like to play again? Please type "yes" or "no": '))
+                    isRepeat = Repeat(repeat)
+                    if isRepeat == False: # If the user(s) don't want to repeat, return False (This will tell us later to quit the game)
+                        return False
+                    else: # If they do want to play again, reset the board and call the game function (Which we are in)
+                        board = [['0', '1', '2', '3', '4', '5', '6'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.']]
+                        play_connect_4_game(board)
+                if xCheckers == oCheckers == 21: # If the board is full and there have been no winners (Remember, we already checked if either player has won!)
+                    print("A draw!\n")
+                    print("This round took " + str(time()-startTime) + " seconds.")
+                    repeat = str(input('Would you like to play again? Please type "yes" or "no": '))
+                    isRepeat = Repeat(repeat)
+                    if isRepeat == False: # If the user(s) don't want to repeat, return False (This will tell us later to quit the game)
+                        return False
+                    else: # If they do want to play again, reset the board and call the game function (Which we are in)
+                       board = [['0', '1', '2', '3', '4', '5', '6'],
+                                ['.', '.', '.', '.', '.', '.', '.'],
+                                ['.', '.', '.', '.', '.', '.', '.'],
+                                ['.', '.', '.', '.', '.', '.', '.'],
+                                ['.', '.', '.', '.', '.', '.', '.'],
+                                ['.', '.', '.', '.', '.', '.', '.'],
+                                ['.', '.', '.', '.', '.', '.', '.']]
+                       play_connect_4_game(board)
+            sleep(1) # Give a little break between the players' turns
+        elif xOrO.lower() == "o":
+            print("The Computer will be Player X.")
+            O = str(input("Player O, what is your name? "))
+            xCheckers = 0
+            oCheckers = 0
+            startTime = time()
+            while xCheckers < 21 and oCheckers < 21: # While the players have not finished using all their checkers
+                x = column_to_play_in_X(board, difficultyLevel, xCheckers)
+                print("The Computer plays in column " + str(x) + ".")
+                xTurnDone = player_x_turn(board,x)
+        
+                while xTurnDone == False: # While Player O has not finished their turn
+                    x = randint(0,6)
+                    print("The Computer plays in column " + str(x) + ".")
+                    xTurnDone = player_x_turn(board,x)
+                xCheckers += 1
+                if is_x_winner(board) == True: # If Player O has won, end the game and print the result, then ask if they want to repeat
+                    print("The Computer wins the game!")
+                    print("This round took " + str(time()-startTime) + " seconds.")
+                    repeat = str(input('Would you like to play again? Please type "yes" or "no": '))
+                    isRepeat = Repeat(repeat)
+                    if isRepeat == False: # If the user(s) don't want to repeat, return False (This will tell us later to quit the game)
+                        return False
+                    else: # If they do want to play again, reset the board and call the game function (Which we are in)
+                        board = [['0', '1', '2', '3', '4', '5', '6'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.']]
+                        play_connect_4_game(board)
+                sleep(1) # Give a little break between the players' turns
+                
+                o = input(str(O) + ", you're O. Which column do you want to play in? ")
+                while o.isdigit() == False:
+                    o = input(str((O) + ", you're O. Which column do you want to play in? "))
+                o = int(o)
+                oTurnDone = player_o_turn(board,o)
+                
+                while oTurnDone == False: # While Player O has not finished their turn
+                    o = input(str(O) + ", you're O. Which column do you want to play in? ")
+                    while o.isdigit() == False:
+                        o = input(str((O) + ", you're O. Which column do you want to play in? "))
+                    o = int(o)
+                    oTurnDone = player_o_turn(board,o)
+                oCheckers += 1
+                if is_o_winner(board) == True: # If Player O has won, end the game and print the result, then ask if they want to repeat
+                    print("Congrats, " + str(O) + ", you've won!")
+                    print("This round took " + str(time()-startTime) + " seconds.")
+                    repeat = str(input('Would you like to play again? Please type "yes" or "no": '))
+                    isRepeat = Repeat(repeat)
+                    if isRepeat == False: # If the user(s) don't want to repeat, return False (This will tell us later to quit the game)
+                        return False
+                    else: # If they do want to play again, reset the board and call the game function (Which we are in)
+                        board = [['0', '1', '2', '3', '4', '5', '6'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.'],
+                                 ['.', '.', '.', '.', '.', '.', '.']]
+                        play_connect_4_game(board)
+                
+                sleep(1) # Give a little break between the Players' turns
+                if xCheckers == oCheckers == 21: # If the board is full and there have been no winners (Remember, we already checked if either player has won!)
+                    print("A draw!\n")
+                    repeat = str(input('Would you like to play again? Please type "yes" or "no": '))
+                    isRepeat = Repeat(repeat)
+                    if isRepeat == False: # If the user(s) don't want to repeat, return False (This will tell us later to quit the game)
+                        return False
+                    else: # If they do want to play again, reset the board and call the game function (Which we are in)
+                       board = [['0', '1', '2', '3', '4', '5', '6'],
+                                ['.', '.', '.', '.', '.', '.', '.'],
+                                ['.', '.', '.', '.', '.', '.', '.'],
+                                ['.', '.', '.', '.', '.', '.', '.'],
+                                ['.', '.', '.', '.', '.', '.', '.'],
+                                ['.', '.', '.', '.', '.', '.', '.'],
+                                ['.', '.', '.', '.', '.', '.', '.']]
+                       play_connect_4_game(board)
+                            
+    else:
+        X = input("\nPlayer X, what is your name? ")
+        O = input("Player O, what is your name? ")
+
+        xCheckers = 0 # Initialize Player X's checkers
+        oCheckers = 0 # Initialize Player O's checkers
+        startTime = time()
+        print_board(board)
+        while xCheckers < 21 and oCheckers < 21: # While the players have not finished using all their checkers
+            x = input(str(X) + ", you're X. Which column do you want to play in? ")
+            while x.isdigit() == False:
+                x = input(str((X) + ", you're X. Which column do you want to play in? "))
+            x = int(x)
+            xTurnDone = player_x_turn(board,x)
+        
+            while xTurnDone == False: # While Player X has not finished their turn
+                x = input(str(X) + ", you're X. Which column do you want to play in? ")
+                while x.isdigit() == False:
+                    x = input(str((X) + ", you're X. Which column do you want to play in? "))
+                x = int(x)
+                xTurnDone = player_x_turn(board,x)
+            xCheckers += 1
+            if is_x_winner(board) == True: # If Player X has won, end the game and print the result, then ask if they want to repeat
+                print("Congrats, " + str(X) + ", you've won!")
+                print("This round took " + str(time()-startTime) + " seconds.")
+                repeat = str(input('Would you like to play again? Please type "yes" or "no": '))
+                isRepeat = Repeat(repeat)
+                if isRepeat == False: # If the user(s) don't want to repeat, return False (This will tell us later to quit the game)
+                    return False
+                else: # If they do want to play again, reset the board and call the game function (Which we are in)
+                    board = [['0', '1', '2', '3', '4', '5', '6'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.']]
+                    play_connect_4_game(board)
+            
+            sleep(1) # Give a little break between the Players' turns
+            
+            o = input(str(O) + ", you're O. Which column do you want to play in? ")
+            while o.isdigit() == False:
+                o = input(str((O) + ", you're O. Which column do you want to play in? "))
+            o = int(o)
+            oTurnDone = player_o_turn(board,o)
+        
+            while oTurnDone == False: # While Player O has not finished their turn
+                o = int(input(str(O) + ", you're O. Which column do you want to play in? "))
+                oTurnDone = player_o_turn(board,o)
+            oCheckers += 1
+            if is_o_winner(board) == True: # If Player O has won, end the game and print the result, then ask if they want to repeat
+                print("Congrats, " + str(O) + ", you've won!")
+                print("This round took " + str(time()-startTime) + " seconds.")
+                repeat = str(input('Would you like to play again? Please type "yes" or "no": '))
+                isRepeat = Repeat(repeat)
+                if isRepeat == False: # If the user(s) don't want to repeat, return False (This will tell us later to quit the game)
+                    return False
+                else: # If they do want to play again, reset the board and call the game function (Which we are in)
+                    board = [['0', '1', '2', '3', '4', '5', '6'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.']]
+                    play_connect_4_game(board)
+            if xCheckers == oCheckers == 21: # If the board is full and there have been no winners (Remember, we already checked if either player has won!)
+                print("A draw!\n")
+                repeat = str(input('Would you like to play again? Please type "yes" or "no": '))
+                isRepeat = Repeat(repeat)
+                if isRepeat == False: # If the user(s) don't want to repeat, return False (This will tell us later to quit the game)
+                    return False
+                else: # If they do want to play again, reset the board and call the game function (Which we are in)
+                    board = [['0', '1', '2', '3', '4', '5', '6'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.'],
+                             ['.', '.', '.', '.', '.', '.', '.']]
+                    play_connect_4_game(board)
+            else:
+                sleep(1) # Give a little break between the players' turns
+
+# Create the board
+board = [['0', '1', '2', '3', '4', '5', '6'],
+         ['.', '.', '.', '.', '.', '.', '.'],
+         ['.', '.', '.', '.', '.', '.', '.'],
+         ['.', '.', '.', '.', '.', '.', '.'],
+         ['.', '.', '.', '.', '.', '.', '.'],
+         ['.', '.', '.', '.', '.', '.', '.'],
+         ['.', '.', '.', '.', '.', '.', '.']]
+result = play_connect_4_game(board)
+if result == False:
+    print("OK, bye!")
